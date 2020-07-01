@@ -9,6 +9,7 @@ try {
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch (PDOException $e) {
     header('HTTP/1.1 500 SERVER ERROR');
+    exit();
 }
 function translate($label)
 {
