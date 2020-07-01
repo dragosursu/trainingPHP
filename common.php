@@ -12,6 +12,5 @@ try {
 }
 function translate($label)
 {
-    $languages = ['en' => ['add' => 'Add','Go to cart'=>'Go to cart'], 'ro' => ['add' => 'Adauga','Go to cart'=>'Cos de cumparaturi']];
-    return $languages['en'][$label];
+    return $label;
 }
