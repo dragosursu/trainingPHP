@@ -11,7 +11,7 @@ if (isset($_POST['id'])) {
         $stmt = $conn->prepare($sql);
         $stmt->execute(array($_POST['id']));
         $result = $stmt->fetch();
-        if ($result != false && !in_array($_POST['id'], $_SESSION['cart'])) {
+        if ($result && !in_array($_POST['id'], $_SESSION['cart'])) {
             $_SESSION['cart'][] = $_POST['id'];
         }
     }
