@@ -7,15 +7,12 @@ if (!isset($_SESSION['cart'])) {
 }
 if (isset($_POST['id'])) {
     if (is_numeric($_POST['id'])) {
-        $sql = 'SELECT * FROM products WHERE id = :id';
+        $sql = 'SELECT * FROM products WHERE id = ?';
         $stmt = $conn->prepare($sql);
-        $stmt->bindParam(':id', $_POST['id'], PDO::PARAM_INT);
-        $stmt->execute();
-        $result = $stmt->fetchAll();
-        if (!empty($result)) {
-            if (!in_array($_POST['id'], $_SESSION['cart'])) {
-                $_SESSION['cart'][] = $_POST['id'];
-            }
+        $stmt->execute(array($_POST['id']));
+        $result = $stmt->fetch();
+        if ($result != false && !in_array($_POST['id'], $_SESSION['cart'])) {
+            $_SESSION['cart'][] = $_POST['id'];
         }
     }
     header('Location: index.php');
@@ -29,7 +26,7 @@ if (empty($_SESSION['cart'])) {
     $in = rtrim(str_repeat('?,', count($_SESSION['cart'])), ',');
     $sql = 'SELECT * FROM products WHERE id NOT IN (' . $in . ')';
     $stmt = $conn->prepare($sql);
-    $stmt->execute($_SESSION['cart']);
+    $stmt->execute(array_values($_SESSION['cart']));
 }
 $products = $stmt->fetchAll(PDO::FETCH_NAMED);
 ?>
