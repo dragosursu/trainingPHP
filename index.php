@@ -5,14 +5,20 @@ require_once 'common.php';
 if (!isset($_SESSION['cart'])) {
     $_SESSION['cart'] = [];
 }
-if (!isset($products)) {
-    $products = [];
-}
 if (isset($_POST['id'])) {
-    if (!in_array($_POST['id'], $_SESSION['cart'])) {
-        $_SESSION['cart'][] = $_POST['id'];
+    if (is_numeric($_POST['id'])) {
+        $sql = 'SELECT * FROM products WHERE id = :id';
+        $stmt = $conn->prepare($sql);
+        $stmt->bindParam(':id', $_POST['id'], PDO::PARAM_INT);
+        $stmt->execute();
+        $result = $stmt->fetchAll();
+        if (!empty($result)) {
+            if (!in_array($_POST['id'], $_SESSION['cart'])) {
+                $_SESSION['cart'][] = $_POST['id'];
+            }
+        }
     }
-    header("Location: index.php");
+    header('Location: index.php');
     exit();
 }
 if (empty($_SESSION['cart'])) {
@@ -26,8 +32,6 @@ if (empty($_SESSION['cart'])) {
     $stmt->execute($_SESSION['cart']);
 }
 $products = $stmt->fetchAll(PDO::FETCH_NAMED);
-
-
 ?>
 <html>
 <head>
@@ -82,6 +86,5 @@ $products = $stmt->fetchAll(PDO::FETCH_NAMED);
 <a href="/cart.php"><?= translate('Go to cart') ?></a>
 </body>
 </html>
-
 
 
