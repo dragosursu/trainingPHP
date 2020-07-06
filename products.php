@@ -2,14 +2,10 @@
 
 require_once 'common.php';
 
-if (isset($_POST['id'])) {
-    if (is_numeric($_POST['id'])) {
-        $sql = 'DELETE FROM products WHERE id = :id';
-        $stmt = $conn->prepare($sql);
-        $stmt->bindParam(':id', $_POST['id'], PDO::PARAM_INT);
-        $stmt->execute();
-        }
-
+if (isset($_POST['id']) && is_numeric($_POST['id'])) {
+    $sql = 'DELETE FROM products WHERE id = ?';
+    $stmt = $conn->prepare($sql);
+    $stmt->execute(array($_POST['id']));
     header('Location: products.php');
     exit();
 }
@@ -17,7 +13,6 @@ $sql = 'SELECT * FROM products';
 $stmt = $conn->prepare($sql);
 $stmt->execute();
 $products = $stmt->fetchAll();
-
 ?>
 <html>
 <head>
@@ -74,7 +69,6 @@ $products = $stmt->fetchAll();
 
 <a href="/product.php"><?= translate('Add') ?></a>
 <a href="/product.php"><?= translate('Logout') ?></a>
-
 
 
 </body>

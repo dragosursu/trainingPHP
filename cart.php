@@ -1,8 +1,7 @@
 <?php
+
 require_once 'common.php';
-//USING SESSION VARIABLE
-//USING RELATIVE PATH PORT->EMAIL
-//WHEN I EDIT PRODUCT TO PUT IN GET[] 'EDIT'/'ADD'
+
 if (!isset($products)) {
     $products = [];
 }
@@ -10,7 +9,6 @@ if (!isset($_SESSION['buffer'])) {
     $_SESSION['buffer'] = [];
 }
 if (isset($_POST['id'])) {
-    $productId = $_POST['id'];
     if (is_numeric($_POST['id'])) {
         foreach ($_SESSION['cart'] as $key => $value) {
             if ($value == $_POST['id']) {
@@ -21,15 +19,16 @@ if (isset($_POST['id'])) {
 }
 if (isset($_POST['name']) && isset($_POST['contact']) && isset($_POST['comments'])) {
     if (!empty($_POST['contact']) && !empty($_POST['name']) && !empty($_SESSION['cart'])) {
-        $to_email = $_POST['contact'];
-        $subject = 'Website Change Request';
-        $headers = "From: " . "cart@5psolutions.com" . "\r\n";
-        $headers .= "Reply-To: " . "cart@5psolutions.com" . "\r\n";
-        $headers .= "CC: " . $_POST['contact'] . "\r\n";
-        $headers .= "MIME-Version: 1.0\r\n";
-        $headers .= "Content-Type: text/html; charset=ISO-8859-1\r\n";
-
-        mail($to_email, $subject, $_SESSION['buffer'], $headers);
+        $to_email = MANAGER;
+        $subject = 'Products Cart Request';
+        $headers = 'From: ' . 'cart@5psolutions.com' . "\r\n";
+        $headers .= 'Reply-To: ' . 'cart@5psolutions.com' . "\r\n";
+        $headers .= 'CC: ' . $_POST['contact'] . "\r\n";
+        $headers .= 'MIME-Version: 1.0 ' . "\r\n";
+        $headers .= 'Content-Type: text/html; charset=ISO-8859-1' . "\r\n";
+        $message = 'Name: ' . $_POST['name'] . ' Contact: ' . $_POST['contact'] . ' Comments: ' . $_POST['comments'] . $_SESSION['buffer'];
+        $message = str_replace('<button type="submit" value="remove">' . translate('remove') . '</button>', '', $message);
+        mail($to_email, $subject, $message, $headers);
     }
 }
 if (!empty($_SESSION['cart'])) {
@@ -95,9 +94,7 @@ foreach ($products as $value): ?>
         </div>
     </div>
 <?php endforeach;
-$_SESSION['buffer'] = ob_get_contents();
-//ob_clean();
-?>
+$_SESSION['buffer'] = ob_get_contents(); ?>
 <form class="form" action="cart.php" method="POST">
     <input class="input" type="text" name="name" placeholder="Name"><br><br>
     <input class="input" type="text" name="contact" placeholder="Contact details"><br><br>

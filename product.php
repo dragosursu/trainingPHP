@@ -1,6 +1,8 @@
 <?php
 
 require_once 'common.php';
+//echo
+
 
 if (!empty($_POST['title']) && !empty($_POST['description']) && !empty($_POST['price']) && !empty($_FILES['image'])) {
     $sql = 'SELECT * FROM products WHERE image_path like ?';
@@ -8,7 +10,7 @@ if (!empty($_POST['title']) && !empty($_POST['description']) && !empty($_POST['p
     $stmt->execute(array($_FILES['image']['name']));
     $result = $stmt->fetch();
     if (!$result && is_numeric($_POST['price'])) {
-        $sql = 'INSERT INTO products(title,description,price,image_path) VALUES  (? ,?, ?,?)';
+        $sql = 'INSERT INTO products(title,description,price,image_path) VALUES  (? ,?, ?, ?)';
         $stmt = $conn->prepare($sql);
         $stmt->execute(array($_POST['title'], $_POST['description'], $_POST['price'], $_FILES['image']['name']));
         $target_dir = "images/";

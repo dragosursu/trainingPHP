@@ -6,7 +6,7 @@ define('USER', 'test');
 define('PASS', 'test');
 
 if (isset($_POST['username']) && isset($_POST['password'])) {
-    if (USERNAME == $_POST['username'] && PASSWORD == $_POST['password']) {
+    if (USER == $_POST['username'] && PASS == $_POST['password']) {
         header('Location: index.php');
         exit();
     }
