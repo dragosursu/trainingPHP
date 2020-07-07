@@ -18,18 +18,18 @@ if (isset($_POST['id'])) {
     }
 }
 if (isset($_POST['name']) && isset($_POST['contact']) && isset($_POST['comments'])) {
-    if (!empty($_POST['contact']) && !empty($_POST['name']) && !empty($_SESSION['cart'])) {
+    if (filter_var($_POST['contact'], FILTER_VALIDATE_EMAIL) && preg_match('/^[a-zA-Z ]*$/', $_POST['name']) && !empty($_SESSION['cart'])) {
         $to_email = MANAGER;
         $subject = 'Products Cart Request';
-        $headers = 'From: ' . 'cart@5psolutions.com' . "\r\n";
-        $headers .= 'Reply-To: ' . 'cart@5psolutions.com' . "\r\n";
-        $headers .= 'CC: ' . $_POST['contact'] . "\r\n";
-        $headers .= 'MIME-Version: 1.0 ' . "\r\n";
-        $headers .= 'Content-Type: text/html; charset=ISO-8859-1' . "\r\n";
-        $message = 'Name: ' . $_POST['name'] . ' Contact: ' . $_POST['contact'] . ' Comments: ' . $_POST['comments'] . $_SESSION['buffer'];
-        $message = str_replace('<button type="submit" value="remove">' . translate('remove') . '</button>', '', $message);
-        mail($to_email, $subject, $message, $headers);
+        $headers = 'From: ' . 'cart@5psolutions.com' . "\r\n" . 'Reply-To: ' . 'cart@5psolutions.com' . "\r\n" . 'CC: ' . $_POST['contact'] . "\r\n"
+            . 'MIME-Version: 1.0 ' . "\r\n" . 'Content-Type: text/html; charset=ISO-8859-1' . "\r\n";
+        $html = file_get_contents('content.html');
+        $content = ' Name: ' . $_POST['name'] . ' Contact: ' . $_POST['contact'] . ' Comments: ' . $_POST['comments'];
+        $content .= preg_replace('#<button type="submit" value="remove">(.*?)</button>#','', $html);
+        mail($to_email, $subject, $content, $headers);
     }
+    header('Location: cart.php');
+    exit();
 }
 if (!empty($_SESSION['cart'])) {
     $in = rtrim(str_repeat('?,', count($_SESSION['cart'])), ',');
@@ -73,7 +73,8 @@ if (!empty($_SESSION['cart'])) {
 <?php ob_start();
 foreach ($products as $value): ?>
     <div class="slide-content">
-        <img class="image" src="/images/<?= $value['image_path']; ?>">
+        <img class="image" src="http://localhost:81/images/<?= $value['image_path']; ?>">
+
         <div class="img-description">
             <form class="form" action="cart.php" method="POST">
                 <input class="input" type="hidden" name="id"
@@ -89,12 +90,16 @@ foreach ($products as $value): ?>
                         <?= $value['price']; ?>
                     </li>
                 </ul>
+
+
                 <button type="submit" value="remove"><?= translate('remove') ?></button>
             </form>
         </div>
     </div>
 <?php endforeach;
-$_SESSION['buffer'] = ob_get_contents(); ?>
+$fp = fopen('content.html', 'w');
+fwrite($fp, ob_get_contents());
+fclose($fp); ?>
 <form class="form" action="cart.php" method="POST">
     <input class="input" type="text" name="name" placeholder="Name"><br><br>
     <input class="input" type="text" name="contact" placeholder="Contact details"><br><br>
