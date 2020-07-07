@@ -15,3 +15,11 @@ function translate($label)
 {
     return $label;
 }
+function getProducts(){
+    global $conn;
+    $in = rtrim(str_repeat('?,', count($_SESSION['cart'])), ',');
+    $sql = 'SELECT * FROM products WHERE id IN (' . $in . ')';
+    $stmt = $conn->prepare($sql);
+    $stmt->execute(array_values($_SESSION['cart']));
+    return $stmt->fetchAll(PDO::FETCH_NAMED);
+}

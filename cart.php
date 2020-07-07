@@ -23,20 +23,17 @@ if (isset($_POST['name']) && isset($_POST['contact']) && isset($_POST['comments'
         $subject = 'Products Cart Request';
         $headers = 'From: ' . 'cart@5psolutions.com' . "\r\n" . 'Reply-To: ' . 'cart@5psolutions.com' . "\r\n" . 'CC: ' . $_POST['contact'] . "\r\n"
             . 'MIME-Version: 1.0 ' . "\r\n" . 'Content-Type: text/html; charset=ISO-8859-1' . "\r\n";
-        $html = file_get_contents('content.html');
         $content = ' Name: ' . $_POST['name'] . ' Contact: ' . $_POST['contact'] . ' Comments: ' . $_POST['comments'];
-        $content .= preg_replace('#<button type="submit" value="remove">(.*?)</button>#','', $html);
+        ob_start();
+        include 'mail.php';
+        $content .= ob_get_clean();
         mail($to_email, $subject, $content, $headers);
     }
     header('Location: cart.php');
     exit();
 }
 if (!empty($_SESSION['cart'])) {
-    $in = rtrim(str_repeat('?,', count($_SESSION['cart'])), ',');
-    $sql = 'SELECT * FROM products WHERE id IN (' . $in . ')';
-    $stmt = $conn->prepare($sql);
-    $stmt->execute(array_values($_SESSION['cart']));
-    $products = $stmt->fetchAll(PDO::FETCH_NAMED);
+    $products = getProducts();
 }
 ?>
 <html>
@@ -70,11 +67,9 @@ if (!empty($_SESSION['cart'])) {
 </head>
 <body>
 
-<?php ob_start();
-foreach ($products as $value): ?>
+<?php foreach ($products as $value): ?>
     <div class="slide-content">
         <img class="image" src="http://localhost:81/images/<?= $value['image_path']; ?>">
-
         <div class="img-description">
             <form class="form" action="cart.php" method="POST">
                 <input class="input" type="hidden" name="id"
@@ -90,16 +85,12 @@ foreach ($products as $value): ?>
                         <?= $value['price']; ?>
                     </li>
                 </ul>
-
-
                 <button type="submit" value="remove"><?= translate('remove') ?></button>
             </form>
         </div>
     </div>
-<?php endforeach;
-$fp = fopen('content.html', 'w');
-fwrite($fp, ob_get_contents());
-fclose($fp); ?>
+<?php endforeach; ?>
+
 <form class="form" action="cart.php" method="POST">
     <input class="input" type="text" name="name" placeholder="Name"><br><br>
     <input class="input" type="text" name="contact" placeholder="Contact details"><br><br>
