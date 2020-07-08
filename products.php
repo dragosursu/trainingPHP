@@ -2,6 +2,10 @@
 
 require_once 'common.php';
 
+if(!isset($_SESSION['login'])){
+    header('Location: login.php');
+    exit();
+}
 if (isset($_POST['id']) && is_numeric($_POST['id'])) {
     $sql = 'DELETE FROM products WHERE id = ?';
     $stmt = $conn->prepare($sql);
@@ -9,6 +13,8 @@ if (isset($_POST['id']) && is_numeric($_POST['id'])) {
     header('Location: products.php');
     exit();
 }
+
+
 $sql = 'SELECT * FROM products';
 $stmt = $conn->prepare($sql);
 $stmt->execute();
@@ -59,8 +65,9 @@ $products = $stmt->fetchAll();
                         <?= $value['price']; ?>
                     </li>
                 </ul>
-                <button type="submit" value="edit"><?= translate('Edit') ?></button>
+<!--                <button type="submit" value="edit">--><?//= translate('Edit') ?><!--</button>-->
                 <button type="submit" value="delete"><?= translate('Delete') ?></button>
+                <a href = "/product.php?id=<?=$value['id']?>"><?=translate('Edit')?></a>
 
             </form>
         </div>

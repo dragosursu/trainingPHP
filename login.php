@@ -7,6 +7,7 @@ define('PASS', 'test');
 
 if (isset($_POST['username']) && isset($_POST['password'])) {
     if (USER == $_POST['username'] && PASS == $_POST['password']) {
+        $_SESSION['login'] = "admin";
         header('Location: index.php');
         exit();
     }

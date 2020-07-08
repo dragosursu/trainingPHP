@@ -1,7 +1,7 @@
 <html>
 <body>
 <?php
-$products = getProducts();
+$content = ' Name: ' . $name. ' Contact: ' . $contact . ' Comments: ' . $comments;
 foreach ($products as $value): ?>
     <br>
     <img width="100px" height="100px" class="image" src="http://localhost:81/images/<?= $value['image_path']; ?>">

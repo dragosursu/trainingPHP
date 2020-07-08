@@ -5,35 +5,68 @@ require_once 'common.php';
 if (!isset($products)) {
     $products = [];
 }
-if (!isset($_SESSION['buffer'])) {
-    $_SESSION['buffer'] = [];
-}
-if (isset($_POST['id'])) {
-    if (is_numeric($_POST['id'])) {
-        foreach ($_SESSION['cart'] as $key => $value) {
-            if ($value == $_POST['id']) {
-                unset($_SESSION['cart'][$key]);
-            }
+if (isset($_POST['id']) && is_numeric($_POST['id'])) {
+    foreach ($_SESSION['cart'] as $key => $value) {
+        if ($value == $_POST['id']) {
+            unset($_SESSION['cart'][$key]);
         }
     }
 }
-if (isset($_POST['name']) && isset($_POST['contact']) && isset($_POST['comments'])) {
-    if (filter_var($_POST['contact'], FILTER_VALIDATE_EMAIL) && preg_match('/^[a-zA-Z ]*$/', $_POST['name']) && !empty($_SESSION['cart'])) {
-        $to_email = MANAGER;
-        $subject = 'Products Cart Request';
-        $headers = 'From: ' . 'cart@5psolutions.com' . "\r\n" . 'Reply-To: ' . 'cart@5psolutions.com' . "\r\n" . 'CC: ' . $_POST['contact'] . "\r\n"
-            . 'MIME-Version: 1.0 ' . "\r\n" . 'Content-Type: text/html; charset=ISO-8859-1' . "\r\n";
-        $content = ' Name: ' . $_POST['name'] . ' Contact: ' . $_POST['contact'] . ' Comments: ' . $_POST['comments'];
-        ob_start();
-        include 'mail.php';
-        $content .= ob_get_clean();
-        mail($to_email, $subject, $content, $headers);
-    }
-    header('Location: cart.php');
-    exit();
-}
 if (!empty($_SESSION['cart'])) {
-    $products = getProducts();
+    $in = rtrim(str_repeat('?,', count($_SESSION['cart'])), ',');
+    $sql = 'SELECT * FROM products WHERE id IN (' . $in . ')';
+    $stmt = $conn->prepare($sql);
+    $stmt->execute(array_values($_SESSION['cart']));
+    $products = $stmt->fetchAll(PDO::FETCH_NAMED);
+}
+
+$nameErr = $contactErr = '';
+$name = $contact = $comments = '';
+
+function sanitize_input($data) {
+    $data = trim($data);
+    $data = stripslashes($data);
+    $data = htmlspecialchars($data);
+    return $data;
+}
+if (isset($_POST['btnCheckout'])) {
+
+    if (empty($_POST['name'])) {
+        $nameErr = 'Name is required';
+    } else {
+        $name = sanitize_input($_POST['name']);
+    }
+    if (empty($_POST['contact'])) {
+        $contactErr = 'Email is required';
+    } else {
+        $contact = sanitize_input($_POST['contact']);
+        if (!filter_var($contact, FILTER_VALIDATE_EMAIL)) {
+            $contactErr = 'Invalid email format';
+        }
+    }
+    if (empty($_POST['comments'])) {
+        $comments = '';
+    } else {
+        $comments = sanitize_input($_POST['comments']);
+    }
+    $to_email = MANAGER;
+    $subject = 'Products Cart Request';
+    $headers = 'From: cart@5psolutions.com'
+        . "\r\n" . 'Reply-To: cart@5psolutions.com'
+        . "\r\n" . 'CC: ' . $contact
+        . "\r\n" . 'MIME-Version: 1.0 '
+        . "\r\n" . 'Content-Type: text/html; charset=ISO-8859-1' . "\r\n";
+    $content = '';
+    ob_start();
+    include 'mail.php';
+    $content .= ob_get_clean();
+    if($nameErr == '' && $contactErr == ''){
+        mail($to_email, $subject, $content, $headers);
+
+    }
+
+//    header('Location: cart.php');
+//    exit();
 }
 ?>
 <html>
@@ -66,7 +99,6 @@ if (!empty($_SESSION['cart'])) {
     </style>
 </head>
 <body>
-
 <?php foreach ($products as $value): ?>
     <div class="slide-content">
         <img class="image" src="http://localhost:81/images/<?= $value['image_path']; ?>">
@@ -85,19 +117,35 @@ if (!empty($_SESSION['cart'])) {
                         <?= $value['price']; ?>
                     </li>
                 </ul>
-                <button type="submit" value="remove"><?= translate('remove') ?></button>
+                <button type="submit" value="remove" name="btnRemove"><?= translate('remove') ?></button>
             </form>
         </div>
     </div>
 <?php endforeach; ?>
-
-<form class="form" action="cart.php" method="POST">
-    <input class="input" type="text" name="name" placeholder="Name"><br><br>
-    <input class="input" type="text" name="contact" placeholder="Contact details"><br><br>
-    <textarea rows="4" cols="50" name="comments" placeholder="Comments"></textarea><br><br>
-    <a href="/index.php"><?= translate('Go to index') ?></a>
-    <button type="submit" value="checkout"><?= translate('checkout') ?></button>
+<form method="post" action="cart.php">
+    <table>
+        <tr>
+            <td>Name:</td>
+            <td><input type="text" name="name">
+                <span class="error">* <?php echo $nameErr; ?></span>
+            </td>
+        </tr>
+        <tr>
+            <td>Contact:</td>
+            <td><input type="text" name="contact">
+                <span class="error">* <?php echo $contactErr; ?></span>
+            </td>
+        </tr>
+        <tr>
+            <td>Comments:</td>
+            <td><textarea name="comments" rows="5" cols="40"></textarea></td>
+        </tr>
+        <td>
+            <button type="submit" name = "btnCheckout" value="checkout"><?= translate('Checkout') ?></button>
+        </td>
+    </table>
 </form>
+<a href="/index.php"><?= translate('Go to index') ?></a>
 </body>
 </html>
 

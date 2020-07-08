@@ -2,48 +2,59 @@
 
 require_once 'common.php';
 //echo
-
-
-if (!empty($_POST['title']) && !empty($_POST['description']) && !empty($_POST['price']) && !empty($_FILES['image'])) {
-    $sql = 'SELECT * FROM products WHERE image_path like ?';
-    $stmt = $conn->prepare($sql);
-    $stmt->execute(array($_FILES['image']['name']));
-    $result = $stmt->fetch();
-    if (!$result && is_numeric($_POST['price'])) {
-        $sql = 'INSERT INTO products(title,description,price,image_path) VALUES  (? ,?, ?, ?)';
-        $stmt = $conn->prepare($sql);
-        $stmt->execute(array($_POST['title'], $_POST['description'], $_POST['price'], $_FILES['image']['name']));
-        $target_dir = "images/";
-        $target_file = $target_dir . basename($_FILES['image']['name']);
-        $uploadOk = 1;
-        $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
-        $check = getimagesize($_FILES['image']['tmp_name']);
-
-        if ($check !== false) {
-            $uploadOk = 1;
-        } else {
-            $uploadOk = 0;
+function uploadImage($target_file)
+{
+    $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
+    $check = getimagesize($_FILES['image']['tmp_name']);
+    if ($check !== false && !file_exists($target_file) && !($_FILES['image']['size'] > 500000)) {
+        if ($imageFileType != 'jpg' && $imageFileType != 'png' && $imageFileType != 'jpeg' && $imageFileType != 'gif') {
+            return 0;
         }
-        if (file_exists($target_file)) {
-            $uploadOk = 0;
-        }
-        if ($_FILES['image']['size'] > 500000) {
-            $uploadOk = 0;
-        }
-        if ($imageFileType != 'jpg' && $imageFileType != 'png' && $imageFileType != 'jpeg'
-            && $imageFileType != 'gif') {
-            $uploadOk = 0;
-        }
-        if (move_uploaded_file($_FILES['image']['tmp_name'], $target_file) && $uploadOk) {
-            echo 'The file ' . basename($_FILES['image']['name']) . ' has been uploaded.';
-        } else {
-            echo 'Sorry, there was an error uploading your file.';
+        if (move_uploaded_file($_FILES['image']['tmp_name'], $target_file)) {
+            return 1;
         }
     }
-    header('Location: products.php');
-    exit();
 }
 
+if (!isset($_SESSION['login'])) {
+    header('Location: login.php');
+    exit();
+}
+if (!empty($_POST['title']) && !empty($_POST['description']) && !empty($_POST['price']) && !empty($_FILES['image'])) {
+    if (isset($_GET['id']) && is_numeric($_GET['id'])) {
+        $sql = 'SELECT * FROM products WHERE id = ?';
+        $stmt = $conn->prepare($sql);
+        $stmt->execute(array($_GET['id']));
+        $result = $stmt->fetch();
+        $target_dir = "images/";
+        $target_file = $target_dir . basename($_FILES['image']['name']);
+        if ($result && uploadImage($target_file)) {
+            $sql = 'UPDATE products SET title = ?,description = ?, price = ?, image_path = ? WHERE id = ?';
+            $stmt = $conn->prepare($sql);
+            $stmt->execute(
+                array($_POST['title'], $_POST['description'], $_POST['price'], $_FILES['image']['name'], $_GET['id'])
+            );
+        }
+        header('Location: product.php');
+        exit();
+    } else {
+        $sql = 'SELECT * FROM products WHERE image_path like ?';
+        $stmt = $conn->prepare($sql);
+        $stmt->execute(array($_FILES['image']['name']));
+        $result = $stmt->fetch();
+        $target_dir = "images/";
+        $target_file = $target_dir . basename($_FILES['image']['name']);
+
+        if (!$result && is_numeric($_POST['price']) && uploadImage($target_file)) {
+            $sql = 'INSERT INTO products(title,description,price,image_path) VALUES  (? ,?, ?, ?)';
+            $stmt = $conn->prepare($sql);
+            $stmt->execute(array($_POST['title'], $_POST['description'], $_POST['price'], $_FILES['image']['name']));
+        }
+            header('Location: products.php');
+            exit();
+    }
+
+}
 ?>
 <html>
 <head>
