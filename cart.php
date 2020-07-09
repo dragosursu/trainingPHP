@@ -21,7 +21,7 @@ if (!empty($_SESSION['cart'])) {
 }
 $nameErr = $contactErr = '';
 $name = $contact = $comments = '';
-if (isset($_POST['btnCheckout'])) {
+if (isset($_POST['btnCheckout']) && !empty($_SESSION['cart'])) {
     if (empty($_POST['name'])) {
         $nameErr = 'Name is required';
     } else {
