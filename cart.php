@@ -5,7 +5,7 @@ require_once 'common.php';
 if (!isset($products)) {
     $products = [];
 }
-if (isset($_POST['id']) && is_numeric($_POST['id'])) {
+if (isset($_POST['btnRemove']) && is_numeric($_POST['id'])) {
     foreach ($_SESSION['cart'] as $key => $value) {
         if ($value == $_POST['id']) {
             unset($_SESSION['cart'][$key]);
@@ -19,27 +19,18 @@ if (!empty($_SESSION['cart'])) {
     $stmt->execute(array_values($_SESSION['cart']));
     $products = $stmt->fetchAll(PDO::FETCH_NAMED);
 }
-
 $nameErr = $contactErr = '';
 $name = $contact = $comments = '';
-
-function sanitize_input($data) {
-    $data = trim($data);
-    $data = stripslashes($data);
-    $data = htmlspecialchars($data);
-    return $data;
-}
 if (isset($_POST['btnCheckout'])) {
-
     if (empty($_POST['name'])) {
         $nameErr = 'Name is required';
     } else {
-        $name = sanitize_input($_POST['name']);
+        $name = filter_var($_POST['name'],FILTER_SANITIZE_STRING);
     }
     if (empty($_POST['contact'])) {
         $contactErr = 'Email is required';
     } else {
-        $contact = sanitize_input($_POST['contact']);
+        $contact = filter_var($_POST['contact'],FILTER_SANITIZE_STRING);
         if (!filter_var($contact, FILTER_VALIDATE_EMAIL)) {
             $contactErr = 'Invalid email format';
         }
@@ -47,26 +38,24 @@ if (isset($_POST['btnCheckout'])) {
     if (empty($_POST['comments'])) {
         $comments = '';
     } else {
-        $comments = sanitize_input($_POST['comments']);
+        $comments = filter_var($_POST['comments'],FILTER_SANITIZE_STRING);
     }
-    $to_email = MANAGER;
-    $subject = 'Products Cart Request';
-    $headers = 'From: cart@5psolutions.com'
-        . "\r\n" . 'Reply-To: cart@5psolutions.com'
-        . "\r\n" . 'CC: ' . $contact
-        . "\r\n" . 'MIME-Version: 1.0 '
-        . "\r\n" . 'Content-Type: text/html; charset=ISO-8859-1' . "\r\n";
-    $content = '';
-    ob_start();
-    include 'mail.php';
-    $content .= ob_get_clean();
     if($nameErr == '' && $contactErr == ''){
+        $to_email = MANAGER;
+        $subject = 'Products Cart Request';
+        $headers = 'From: cart@5psolutions.com'
+            . "\r\n" . 'Reply-To: cart@5psolutions.com'
+            . "\r\n" . 'CC: ' . $contact
+            . "\r\n" . 'MIME-Version: 1.0 '
+            . "\r\n" . 'Content-Type: text/html; charset=ISO-8859-1' . "\r\n";
+        $content = '';
+        ob_start();
+        include 'mail.php';
+        $content .= ob_get_clean();
         mail($to_email, $subject, $content, $headers);
-
+        header('Location: cart.php');
+        exit();
     }
-
-//    header('Location: cart.php');
-//    exit();
 }
 ?>
 <html>
@@ -92,10 +81,6 @@ if (isset($_POST['btnCheckout'])) {
         ul {
             list-style: none
         }
-
-        textarea {
-            resize: none;
-        }
     </style>
 </head>
 <body>
@@ -117,7 +102,7 @@ if (isset($_POST['btnCheckout'])) {
                         <?= $value['price']; ?>
                     </li>
                 </ul>
-                <button type="submit" value="remove" name="btnRemove"><?= translate('remove') ?></button>
+                <button type="submit" value="remove" name="btnRemove"><?= translate('Remove') ?></button>
             </form>
         </div>
     </div>
@@ -127,13 +112,13 @@ if (isset($_POST['btnCheckout'])) {
         <tr>
             <td>Name:</td>
             <td><input type="text" name="name">
-                <span class="error">* <?php echo $nameErr; ?></span>
+                <span class="error">* <?=$nameErr; ?></span>
             </td>
         </tr>
         <tr>
             <td>Contact:</td>
             <td><input type="text" name="contact">
-                <span class="error">* <?php echo $contactErr; ?></span>
+                <span class="error">* <?=$contactErr; ?></span>
             </td>
         </tr>
         <tr>
